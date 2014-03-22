@@ -1,3 +1,5 @@
+# helloPG
+
 This is a package skeleton for incorporating the Polya-Gamma distribution into your own code or R package. It assumes that you will be using RcppArmadillofor matrix computations.
 
 The main wrapper C++ function, defined in helloPG.cpp, is rpg(colvec shape, colvec scale).  This returns a colvec of random draws with the corresponding shape and scale parameters.  This is a very thin wrapper to the underlying PolyaGamma C++ class, defined in PolyaGamma.h.  It doesn't do things that it probably should, like type-checking and size-checking on shape and scale.  (Thus, e.g., if you feed it shape and scale vectors of different lengths, you will probably get garbage and/or a segfault.)  It should be obvious how to modify the wrapper, if you want.
@@ -9,3 +11,4 @@ Probably you will want to modify the helloPG.cpp to accomplish whatever you want
     library(devtools)
     build('helloPG')
 
+For an example of an R package I have created that hews closely to this template, see the [FDRreg](https://github.com/jgscott/FDRreg/) package.
