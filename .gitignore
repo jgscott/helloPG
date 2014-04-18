@@ -3,3 +3,9 @@
 
 # Example code in package build process
 *-Ex.R
+
+# Other files
+*~
+*.gz
+*.tgz
+*.tar
