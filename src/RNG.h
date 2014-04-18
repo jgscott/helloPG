@@ -1,4 +1,5 @@
-// Copyright 2012 Jesse Windle - jwindle@ices.utexas.edu
+// -*- c-basic-offset: 4; -*-
+// Copyright 2013 Jesse Windle - jesse.windle@gmail.com
 
 // This program is free software: you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,9 +24,11 @@
 #include <stdexcept>
 #include <cmath>
 
-#define USE_R
 #ifdef USE_R
 #include "RRNG.h"
+#define  RCHECK 1000
+#elif  USE_GRNGPAR
+#include "GRNGPar.h"
 #else
 #include "GRNG.h"
 #endif
@@ -37,7 +40,11 @@
 
 const double SQRT2PI = 2.50662827;
 
+inline void check_R_interupt(int& count);
+
 class RNG : public BasicRNG {
+
+protected:
 
   // Truncated Normal Helper Functions / Variables.
   double alphastar(double left);
@@ -69,6 +76,10 @@ class RNG : public BasicRNG {
 
   static double Beta(double a, double b, bool log=false);
 
+  // Truncated Exponential
+  double texpon_rate(double left, double rate);
+  double texpon_rate(double left, double right, double rate);
+
   // Truncated Normal
   double tnorm(double left);               // One sided standard.
   double tnorm(double left, double right); // Two sided standard.
@@ -92,7 +103,7 @@ class RNG : public BasicRNG {
   // Truncated Inv chi 2
   double rtinvchi2(double scale, double trunc);
 
-  // Random variates with Mat.  Fills the Mat with samples.
+  // Random variates with Mat.  Fills the Mat with samples.  Need to keep for legacy code.
   template<typename Mat> void unif  (Mat& M);
   template<typename Mat> void expon_mean(Mat& M, double mean);
   template<typename Mat> void expon_rate (Mat& M, double rate);
@@ -103,6 +114,8 @@ class RNG : public BasicRNG {
   template<typename Mat> void gamma_rate  (Mat& M, double shape, double scale);
   template<typename Mat> void igamma(Mat& M, double shape, double scale);
   template<typename Mat> void flat  (Mat& M, double a    , double b    );
+  template<typename Mat> void tnorm (Mat& M, double left, double mu, double sd);
+  template<typename Mat> void tnorm (Mat& M, double left, double right, double mu, double sd);
 
   template<typename Mat> void expon_mean(Mat& M, const Mat& mean);
   template<typename Mat> void expon_rate (Mat& M, const Mat& rate);
@@ -131,18 +144,18 @@ void RNG::unif(Mat& M)
     M(i) = BasicRNG::flat();
 } // unif
 
-#define ONEP(NAME, P1)				\
+#define ONEP(FUNC, P1)				\
   template<typename Mat>			\
-  void RNG::NAME(Mat& M, double P1)		\
+  void RNG::FUNC(Mat& M, double P1)		\
   {						\
     for(uint i = 0; i < (uint)M.size(); i++)	\
-      M(i) = NAME (P1);				\
+      M(i) = FUNC (P1);				\
   }						\
   template<typename Mat>			\
-  void RNG::NAME(Mat& M, const Mat& P1)		\
+  void RNG::FUNC(Mat& M, const Mat& P1)		\
   {						\
     for(uint i = 0; i < (uint)M.size(); i++)	\
-      M(i) = NAME (P1(i % P1.size()));		\
+      M(i) = FUNC (P1(i % P1.size()));		\
   }						\
 
 ONEP(expon_mean, mean)
@@ -155,20 +168,20 @@ ONEP(norm      ,   sd)
 //--------------------------------------------------------------------
 // Distributions with two parameters.
 
-#define TWOP(NAME, P1, P2)					\
+#define TWOP(FUNC, P1, P2)					\
   template<typename Mat>					\
-  void RNG::NAME(Mat& M, double P1, double P2)			\
+  void RNG::FUNC(Mat& M, double P1, double P2)			\
   {								\
     for(uint i = 0; i < (uint)M.size(); i++)			\
-      M(i) = NAME (P1, P2);					\
+      M(i) = FUNC (P1, P2);					\
   }								\
   template<typename Mat>					\
-  void RNG::NAME(Mat& M, const Mat& P1, const Mat& P2)		\
+  void RNG::FUNC(Mat& M, const Mat& P1, const Mat& P2)		\
   {								\
     uint p1len = P1.size();					\
     uint p2len = P2.size();					\
     for(uint i = 0; i < (uint)M.size(); i++)			\
-      M(i) = NAME (P1(i%p1len), P2(i%p2len) );			\
+      M(i) = FUNC (P1(i%p1len), P2(i%p2len) );			\
   }								\
 
 TWOP(norm       ,  mean,  sd)
@@ -178,5 +191,16 @@ TWOP(igamma     , shape,  scale)
 TWOP(flat       ,     a,  b    )
 
 #undef TWOP
+
+template<typename Mat> void RNG::tnorm (Mat& M, double left, double mu, double sd){
+  for(uint i = 0; i < (uint)M.size(); i++)	
+    M(i) = tnorm(left, mu, sd);
+}
+
+template<typename Mat> void RNG::tnorm (Mat& M, double left, double right, double mu, double sd)
+{
+  for(uint i = 0; i < (uint)M.size(); i++) 
+    M(i) = tnorm(left, right, mu, sd);
+}
 
 #endif

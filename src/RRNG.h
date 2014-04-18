@@ -1,4 +1,4 @@
-// Copyright 2012 Jesse Windle - jwindle@ices.utexas.edu
+// Copyright 2012 Jesse Windle - jesse.windle@gmail.com
 
 // This program is free software: you can redistribute it and/or
 // modify it under the terms of the GNU General Public License as
